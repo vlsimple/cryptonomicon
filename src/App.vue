@@ -42,7 +42,9 @@
                 CHD
               </span>
             </div>
-            <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+            <div v-if="exists" class="text-sm text-red-600">
+              Такой тикер уже добавлен.
+            </div>
           </div>
         </div>
         <button
@@ -163,31 +165,52 @@ export default {
       ticker: "",
       tickers: [],
       sel: null,
+      exists: null,
       graph: [],
+      coinlist: {},
     };
+  },
+
+  async created() {
+    const response = await fetch(
+      `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
+    );
+    const data = await response.json();
+    this.coinlist = data.Data;
+    console.log(this.coinlist["BTC"]["FullName"]);
+    console.log(this.coinlist["BTC"]["Symbol"]);
   },
 
   methods: {
     add() {
-      const currentTicker = {
-        name: this.ticker,
-        price: "-",
-      };
-
-      this.tickers.push(currentTicker);
-      setInterval(async () => {
-        const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD`
-        );
-        const data = await f.json();
-        this.tickers.find((t) => t.name == currentTicker.name).price =
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-
-        if (this.sel?.name == currentTicker.name) {
-          this.graph.push(data.USD);
+      this.exists = false;
+      if (this.tickers.length) {
+        for (let i in this.tickers) {
+          if (this.tickers[i].name == this.ticker) {
+            this.exists = true;
+          }
         }
-      }, 3000);
-      this.ticker = "";
+      }
+      if (this.exists == false) {
+        const currentTicker = {
+          name: this.ticker,
+          price: "-",
+        };
+        this.tickers.push(currentTicker);
+        setInterval(async () => {
+          const f = await fetch(
+            `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD`
+          );
+          const data = await f.json();
+          this.tickers.find((t) => t.name == currentTicker.name).price =
+            data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+
+          if (this.sel?.name == currentTicker.name) {
+            this.graph.push(data.USD);
+          }
+        }, 3000);
+        this.ticker = "";
+      }
     },
 
     select(ticker) {
