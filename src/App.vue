@@ -11,6 +11,7 @@
               <input
                 v-model="ticker"
                 v-on:keydown.enter="add"
+                v-on:keyup="suggest"
                 type="text"
                 name="wallet"
                 id="wallet"
@@ -22,24 +23,11 @@
               class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
             >
               <span
+                v-for="s in suggested"
+                v-bind:key="s"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
-                BTC
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                DOGE
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                BCH
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                CHD
+                {{ s }}
               </span>
             </div>
             <div v-if="exists" class="text-sm text-red-600">
@@ -168,6 +156,8 @@ export default {
       exists: null,
       graph: [],
       coinlist: {},
+      suggested: ["BTC", "ETH", "BCH", "DOGE"],
+      previous_ticker: "",
     };
   },
 
@@ -188,6 +178,7 @@ export default {
         for (let i in this.tickers) {
           if (this.tickers[i].name == this.ticker) {
             this.exists = true;
+            this.previous_ticker = this.ticker;
           }
         }
       }
@@ -216,6 +207,13 @@ export default {
     select(ticker) {
       this.sel = ticker;
       this.graph = [];
+    },
+
+    suggest() {
+      this.suggested[1] = this.ticker;
+      if (this.exists == true && this.ticker != this.previous_ticker) {
+        this.exists = false;
+      }
     },
 
     handleDelete(tickerToRemove) {
