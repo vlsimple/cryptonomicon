@@ -10,33 +10,36 @@
             <div class="mt-1 relative rounded-md shadow-md">
               <input
                 v-model="ticker"
-                v-on:keydown.enter="add"
+                v-on:keydown.enter="add(ticker)"
                 v-on:keyup="suggest"
                 type="text"
                 name="wallet"
                 id="wallet"
                 class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-                placeholder="Например DOGE"
+                placeholder="Например BTC"
               />
             </div>
-            <div
-              class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
-            >
-              <span
-                v-for="s in suggested"
-                v-bind:key="s"
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
+            <template v-if="suggested.length">
+              <div
+                class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
               >
-                {{ s }}
-              </span>
-            </div>
+                <span
+                  v-for="s in suggested"
+                  v-bind:key="s"
+                  v-on:click="add(s)"
+                  class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
+                >
+                  {{ s }}
+                </span>
+              </div>
+            </template>
             <div v-if="exists" class="text-sm text-red-600">
               Такой тикер уже добавлен.
             </div>
           </div>
         </div>
         <button
-          v-on:click="add"
+          v-on:click="add(ticker)"
           type="button"
           class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
         >
@@ -155,8 +158,8 @@ export default {
       sel: null,
       exists: null,
       graph: [],
-      coinlist: {},
-      suggested: ["BTC", "ETH", "BCH", "DOGE"],
+      coinlist: [],
+      suggested: [],
       previous_ticker: "",
     };
   },
@@ -167,24 +170,24 @@ export default {
     );
     const data = await response.json();
     this.coinlist = data.Data;
-    console.log(this.coinlist["BTC"]["FullName"]);
-    console.log(this.coinlist["BTC"]["Symbol"]);
+    //    console.log(this.coinlist["BTC"]["Symbol"]);
   },
 
   methods: {
-    add() {
+    add(ticker) {
       this.exists = false;
+      this.ticker = ticker;
       if (this.tickers.length) {
         for (let i in this.tickers) {
-          if (this.tickers[i].name == this.ticker) {
+          if (this.tickers[i].name.toLowerCase() == ticker.toLowerCase()) {
             this.exists = true;
-            this.previous_ticker = this.ticker;
+            this.previous_ticker = ticker;
           }
         }
       }
       if (this.exists == false) {
         const currentTicker = {
-          name: this.ticker,
+          name: ticker,
           price: "-",
         };
         this.tickers.push(currentTicker);
@@ -210,7 +213,16 @@ export default {
     },
 
     suggest() {
-      this.suggested[1] = this.ticker;
+      this.suggested = [];
+      if (this.ticker != "") {
+        for (let i in this.coinlist) {
+          if (i.toLowerCase().includes(this.ticker.toLowerCase())) {
+            if (this.suggested.length < 4) {
+              this.suggested.push(i);
+            }
+          }
+        }
+      }
       if (this.exists == true && this.ticker != this.previous_ticker) {
         this.exists = false;
       }
