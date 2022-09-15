@@ -166,6 +166,8 @@
 </template>
 
 <script>
+import { loadTicker, loadCoinList } from "./api";
+
 export default {
   name: "App",
 
@@ -204,12 +206,9 @@ export default {
       });
     }
 
-    const response = await fetch(
-      `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
-    );
-    const data = await response.json();
-    this.coinlist = data.Data;
-    //    console.log(this.coinlist["BTC"]["Symbol"]);
+    const receivedCoinList = await loadCoinList();
+    this.coinlist = receivedCoinList.Data;
+    //console.log(this.coinlist["BTC"]["Symbol"]);
   },
 
   computed: {
@@ -257,15 +256,14 @@ export default {
   methods: {
     subscribeToUpdates(tickerName) {
       setInterval(async () => {
-        const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD`
-        );
-        const data = await f.json();
+        const exchangeData = await loadTicker(tickerName);
         this.tickers.find((t) => t.name == tickerName).price =
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+          exchangeData.USD > 1
+            ? exchangeData.USD.toFixed(2)
+            : exchangeData.USD.toPrecision(2);
 
         if (this.selectedTicker?.name == tickerName) {
-          this.graph.push(data.USD);
+          this.graph.push(exchangeData.USD);
         }
       }, 3000);
       this.ticker = "";
