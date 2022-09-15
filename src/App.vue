@@ -178,7 +178,6 @@ export default {
       graph: [],
       coinlist: [],
       suggested: [],
-      previous_ticker: "",
       page: 1,
       filter: "",
     };
@@ -279,7 +278,6 @@ export default {
         for (let i in this.tickers) {
           if (this.tickers[i].name.toLowerCase() == ticker.toLowerCase()) {
             this.exists = true;
-            this.previous_ticker = ticker;
           }
         }
       }
@@ -310,9 +308,6 @@ export default {
           }
         }
       }
-      if (this.exists == true && this.ticker != this.previous_ticker) {
-        this.exists = false;
-      }
     },
 
     handleDelete(tickerToRemove) {
@@ -324,6 +319,12 @@ export default {
   },
 
   watch: {
+    ticker() {
+      if (this.exists == true) {
+        this.exists = false;
+      }
+    },
+
     selectedTicker() {
       this.graph = [];
     },
