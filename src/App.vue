@@ -201,10 +201,9 @@ export default {
     const tickersData = localStorage.getItem("cryptonomicon-list");
     if (tickersData) {
       this.tickers = JSON.parse(tickersData);
-      this.tickers.forEach((ticker) => {
-        this.subscribeToUpdates(ticker.name);
-      });
     }
+
+    setInterval(this.updateTickers, 5000);
 
     const receivedCoinList = await loadCoinList();
     this.coinlist = receivedCoinList.Data;
@@ -254,19 +253,29 @@ export default {
   },
 
   methods: {
-    subscribeToUpdates(tickerName) {
-      setInterval(async () => {
-        const exchangeData = await loadTicker(tickerName);
-        this.tickers.find((t) => t.name == tickerName).price =
-          exchangeData.USD > 1
-            ? exchangeData.USD.toFixed(2)
-            : exchangeData.USD.toPrecision(2);
+    async updateTickers() {
+      if (!this.tickers.length) {
+        return;
+      }
 
-        if (this.selectedTicker?.name == tickerName) {
-          this.graph.push(exchangeData.USD);
+      const exchangeData = await loadTicker(this.tickers.map((t) => t.name));
+
+      this.tickers.forEach((ticker) => {
+        const price = exchangeData[ticker.name.toUpperCase()];
+
+        if (!price) {
+          ticker.price = "-";
+          return;
         }
-      }, 3000);
-      this.ticker = "";
+
+        const normalizedPrice = 1 / price;
+        console.log(normalizedPrice);
+        const formattedPrice =
+          normalizedPrice > 1
+            ? normalizedPrice.toFixed(2)
+            : normalizedPrice.toPrecision(2);
+        ticker.price = formattedPrice;
+      });
     },
 
     add(ticker) {
@@ -286,8 +295,6 @@ export default {
         };
         this.tickers = [...this.tickers, currentTicker];
         this.filter = "";
-
-        this.subscribeToUpdates(currentTicker.name);
       }
     },
 
