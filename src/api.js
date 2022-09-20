@@ -1,9 +1,15 @@
-export const loadTicker = (tickers) =>
+export const loadTickers = (tickers) =>
   fetch(
-    `https://min-api.cryptocompare.com/data/price?fsym=USD&tsyms=${tickers.join(
+    `https://min-api.cryptocompare.com/data/pricemulti?fsym=${tickers.join(
       ","
-    )}`
-  ).then((r) => r.json());
+    )}&tsyms=USD`
+  )
+    .then((r) => r.json())
+    .then((rawData) =>
+      Object.fromEntries(
+        Object.entries(rawData).map(([key, value]) => [key, value.USD])
+      )
+    );
 
 export const loadCoinList = () =>
   fetch(
