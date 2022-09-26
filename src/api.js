@@ -1,6 +1,6 @@
 export const loadTickers = (tickers) =>
   fetch(
-    `https://min-api.cryptocompare.com/data/pricemulti?fsym=${tickers.join(
+    `https://min-api.cryptocompare.com/data/pricemulti?fsyms=${tickers.join(
       ","
     )}&tsyms=USD`
   )
