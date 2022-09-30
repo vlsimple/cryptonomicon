@@ -166,7 +166,7 @@
 </template>
 
 <script>
-import { loadTickers, loadCoinList } from "./api";
+import { loadTickers, loadCoinList, subscribeToTicker } from "./api";
 
 export default {
   name: "App",
@@ -199,15 +199,19 @@ export default {
     }
 
     const tickersData = localStorage.getItem("cryptonomicon-list");
+
     if (tickersData) {
       this.tickers = JSON.parse(tickersData);
+      this.tickers.forEach((ticker) => {
+        subscribeToTicker(ticker.name, () => {});
+      });
     }
 
     setInterval(this.updateTickers, 5000);
 
     const receivedCoinList = await loadCoinList();
-    this.coinlist = receivedCoinList.Data;
-    //console.log(this.coinlist["BTC"]["Symbol"]);
+    this.coinlist = receivedCoinList;
+    //console.log(this.coinlist);
   },
 
   computed: {
@@ -269,8 +273,10 @@ export default {
 
       this.tickers.forEach((ticker) => {
         const price = exchangeData[ticker.name.toUpperCase()];
-
         ticker.price = price ?? "-";
+        if (this.selectedTicker?.name === ticker.name.toUpperCase()) {
+          this.graph.push(ticker.price);
+        }
       });
     },
 
@@ -286,11 +292,12 @@ export default {
       }
       if (this.exists == false) {
         const currentTicker = {
-          name: ticker,
+          name: ticker.toUpperCase(),
           price: "-",
         };
         this.tickers = [...this.tickers, currentTicker];
         this.filter = "";
+        subscribeToTicker(this.currentTicker.name, () => {});
       }
     },
 
@@ -301,13 +308,13 @@ export default {
     suggest() {
       this.suggested = [];
       if (this.ticker != "") {
-        for (let i in this.coinlist) {
-          if (i.toLowerCase().includes(this.ticker.toLowerCase())) {
+        Object.entries(this.coinlist).forEach((element) => {
+          if (element[1].toLowerCase().includes(this.ticker.toLowerCase())) {
             if (this.suggested.length < 4) {
-              this.suggested.push(i);
+              this.suggested.push(element[0]);
             }
           }
-        }
+        });
       }
     },
 
