@@ -1,29 +1,35 @@
-const tickers = new Map();
+const tickersHandlers = new Map();
 
-export const loadTickers = (tickers) =>
+const loadTickers = () => {
+  if (tickersHandlers.size === 0) {
+    return;
+  }
+
   fetch(
-    `https://min-api.cryptocompare.com/data/pricemulti?fsyms=${tickers.join(
-      ","
-    )}&tsyms=USD`
+    `https://min-api.cryptocompare.com/data/pricemulti?fsyms=${[
+      ...tickersHandlers.keys(),
+    ].join(",")}&tsyms=USD`
   )
     .then((r) => r.json())
-    .then((rawData) =>
-      Object.fromEntries(
+    .then((rawData) => {
+      const updatedPrices = Object.fromEntries(
         Object.entries(rawData).map(([key, value]) => [key, value.USD])
-      )
-    );
+      );
 
-export const subscribeToTicker = (ticker, cb) => {
-  const subscribers = tickers.get(ticker) || [];
-  tickers.set(ticker, [...subscribers, cb]);
+      Object.entries(updatedPrices).forEach(([currency, newPrice]) => {
+        const handlers = tickersHandlers.get(currency) ?? [];
+        handlers.forEach((fn) => fn(newPrice));
+      });
+    });
 };
 
-export const unsibscribeFromTicker = (ticker, cb) => {
-  const subscribers = tickers.get(ticker) || [];
-  tickers.set(
-    ticker,
-    subscribers.filter((fn) => fn != cb)
-  );
+export const subscribeToTicker = (ticker, cb) => {
+  const subscribers = tickersHandlers.get(ticker) || [];
+  tickersHandlers.set(ticker, [...subscribers, cb]);
+};
+
+export const unsibscribeFromTicker = (ticker) => {
+  tickersHandlers.delete(ticker);
 };
 
 export const loadCoinList = () =>
@@ -37,3 +43,9 @@ export const loadCoinList = () =>
         ])
       )
     );
+
+setInterval(loadTickers, 5000);
+
+window.tickers = tickersHandlers;
+
+//1:16:24

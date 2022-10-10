@@ -166,7 +166,7 @@
 </template>
 
 <script>
-import { loadTickers, loadCoinList, subscribeToTicker } from "./api";
+import { loadCoinList, subscribeToTicker, unsibscribeFromTicker } from "./api";
 
 export default {
   name: "App",
@@ -203,7 +203,9 @@ export default {
     if (tickersData) {
       this.tickers = JSON.parse(tickersData);
       this.tickers.forEach((ticker) => {
-        subscribeToTicker(ticker.name, () => {});
+        subscribeToTicker(ticker.name, (newPrice) => {
+          this.updateTicker(ticker.name, newPrice);
+        });
       });
     }
 
@@ -257,6 +259,14 @@ export default {
   },
 
   methods: {
+    updateTicker(tickerName, price) {
+      this.tickers
+        .filter((t) => t.name === tickerName)
+        .forEach((t) => {
+          t.price = price;
+        });
+    },
+
     formatPrice(price) {
       if (price == "-") {
         return price;
@@ -265,19 +275,17 @@ export default {
     },
 
     async updateTickers() {
-      if (!this.tickers.length) {
-        return;
-      }
-
-      const exchangeData = await loadTickers(this.tickers.map((t) => t.name));
-
-      this.tickers.forEach((ticker) => {
-        const price = exchangeData[ticker.name.toUpperCase()];
-        ticker.price = price ?? "-";
-        if (this.selectedTicker?.name === ticker.name.toUpperCase()) {
-          this.graph.push(ticker.price);
-        }
-      });
+      // if (!this.tickers.length) {
+      //   return;
+      // }
+      // const exchangeData = await loadTickers(this.tickers.map((t) => t.name));
+      // this.tickers.forEach((ticker) => {
+      //   const price = exchangeData[ticker.name.toUpperCase()];
+      //   ticker.price = price ?? "-";
+      //   if (this.selectedTicker?.name === ticker.name.toUpperCase()) {
+      //     this.graph.push(ticker.price);
+      //   }
+      // });
     },
 
     add(ticker) {
@@ -297,7 +305,10 @@ export default {
         };
         this.tickers = [...this.tickers, currentTicker];
         this.filter = "";
-        subscribeToTicker(this.currentTicker.name, () => {});
+        this.ticker = "";
+        subscribeToTicker(currentTicker.name, (newPrice) =>
+          this.updateTicker(currentTicker.name, newPrice)
+        );
       }
     },
 
@@ -323,6 +334,7 @@ export default {
       if (this.selectedTicker == tickerToRemove) {
         this.selectedTicker = null;
       }
+      unsibscribeFromTicker(tickerToRemove.name);
     },
   },
 
