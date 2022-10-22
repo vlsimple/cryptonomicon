@@ -76,6 +76,4 @@ export const loadCoinList = () =>
       )
     );
 
-window.tickers = tickersHandlers;
-
-//1:27:59
+//window.tickers = tickersHandlers;

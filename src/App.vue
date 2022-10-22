@@ -87,6 +87,7 @@
             @click="select(t)"
             :class="{
               'border-4': selectedTicker == t,
+              'bg-red-100': t.price === '-',
             }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
           >
@@ -209,7 +210,7 @@ export default {
       });
     }
 
-    setInterval(this.updateTickers, 5000);
+    //setInterval(this.updateTickers, 5000);
 
     const receivedCoinList = await loadCoinList();
     this.coinlist = receivedCoinList;
